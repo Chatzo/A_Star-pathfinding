@@ -4,11 +4,9 @@ using UnityEngine;
 
 internal class Node
 {
-    // GameObject/Tile that this node is connected to in Unity
-    internal Tile tile { get; private set; }
-
     //Used for Pathfinding
     private Vector3 position;
+    private bool walkable;
     private int hValue = 0; // distance to the end node
     private int gValue = 0; // distance from starting node
     //fValue is the gValue + the hValue
@@ -17,20 +15,27 @@ internal class Node
         private set {}
     }
     internal Node pathParent = null;
-    internal Node(Vector3 position)
+    internal Node(Vector3 position, bool walkable)
     {
         this.position = position;
+        this.walkable = walkable;
     }
-    internal Node(Tile tile)
-    {
-        this.tile = tile;
-        this.position = tile.transform.position;
-    }
+
     private void ResetNodePathValues()
     {
         hValue = 0;
         gValue = 0;
         pathParent = null;
+    }
+
+    internal Vector3 GetPosition()
+    {
+        return position;
+    }
+
+    internal bool GetWalkable()
+    {
+        return walkable;
     }
 
 }

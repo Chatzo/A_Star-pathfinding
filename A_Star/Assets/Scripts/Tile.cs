@@ -4,7 +4,6 @@ using UnityEngine;
 
 internal class Tile : MonoBehaviour
 {
-    private Node tileNode;
     private Color startingColor;
     private Renderer tileRenderer;
 
@@ -12,9 +11,8 @@ internal class Tile : MonoBehaviour
     {
         tileRenderer = GetComponent<Renderer>();
     }
-    internal void Init(Node node, Color startingColor)
+    internal void Init(Color startingColor)
     {
-        this.tileNode = node;
         this.startingColor = startingColor;
         SetColor(startingColor);
     }

@@ -4,53 +4,51 @@ using UnityEngine;
 
 namespace AStar
 {
-    internal class PathFindingGrid : MonoBehaviour
+    internal class TileGrid : MonoBehaviour
     {
         [SerializeField] private Tile tilePrefab;
-        private Node [,] nodeGrid;
+        public Tile [,] tileGrid { get; private set; }
         public int width;
         public int depth;
         public Color colorOne;
         public Color colorTwo;
+
         private void Start()
         {
             CreateGrid(width, depth);
         }
-
         private void CreateGrid(int width, int depth)
         {
-            nodeGrid = new Node[width, depth];
+            tileGrid = new Tile[width, depth];
             Tile tile;
-            Node node;
-            for (int i = 0; i < nodeGrid.GetLength(0); i++)
+            for (int i = 0; i < tileGrid.GetLength(0); i++)
             {
-                for(int j = 0; j < nodeGrid.GetLength(1); j++)
+                for(int j = 0; j < tileGrid.GetLength(1); j++)
                 {
                     tile = Instantiate(tilePrefab);
                     tile.transform.position = new Vector3(i, 0, j);
                     tile.transform.parent = this.transform;
-                    node = new Node(tile);
 
                     if ((i % 2 != 0) == (j % 2 == 0))
-                        tile.Init(node, colorTwo);
+                        tile.Init(colorTwo);
                     else
-                        tile.Init(node, colorOne);
+                        tile.Init(colorOne);
                     
-                    nodeGrid[i, j] = node;
+                    tileGrid[i, j] = tile;
                 }
             }
         }
 
         private void ResetColor(Color first, Color second)
         {
-            for (int i = 0; i < nodeGrid.GetLength(0); i++)
+            for (int i = 0; i < tileGrid.GetLength(0); i++)
             {
-                for (int j = 0; j < nodeGrid.GetLength(1); j++)
+                for (int j = 0; j < tileGrid.GetLength(1); j++)
                 {
                     if ((i % 2 != 0) == (j % 2 == 0))
-                        nodeGrid[i,j].tile.GetComponent<Renderer>().material.color = second;
+                        tileGrid[i,j].GetComponent<Renderer>().material.color = second;
                     else
-                        nodeGrid[i, j].tile.GetComponent<Renderer>().material.color = first;
+                        tileGrid[i, j].GetComponent<Renderer>().material.color = first;
                 }
             }
         }

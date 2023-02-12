@@ -49,7 +49,6 @@ internal class NodeGrid : MonoBehaviour
         //get a position of the grid in percent of the grid.
         //for x, 0 is to the far left, 0.5 in the middle and 1 to the far right 
         //for y, 0 is the bottom, 0
-        Debug.Log("WorldPosition: " + worldPosition);
         float XpositionPercent = (worldPosition.x + gridSize.x / 2) / gridSize.x;
         float YpositionPercent = (worldPosition.z + gridSize.y / 2) / gridSize.y;
         //clamp between 0 and 1 to keep it within bounds of the grid
@@ -66,7 +65,7 @@ internal class NodeGrid : MonoBehaviour
         //3,X,4
         //5,6,7
         Node[] neighbours = new Node[8];
-        //UpLEft
+        //UpLeft
         neighbours[0] = GetNodeAtIndex(node.GetGridIndex().x - 1, node.GetGridIndex().y + 1);
         //Up
         neighbours[1] = GetNodeAtIndex(node.GetGridIndex().x, node.GetGridIndex().y + 1);
@@ -87,34 +86,28 @@ internal class NodeGrid : MonoBehaviour
     }
     private Node GetNodeAtIndex(int positionX, int positionY)
     {
-        if (positionX < 0 || positionX >= gridSize.x || positionY < 0 || positionY >= gridSize.y)
+        if (positionX < 0 || positionX >= gridWidth || positionY < 0 || positionY >= gridLength)
             return null;
         return nodeGrid[positionX, positionY];
     }
-    private Node GetNodeAtIndex(Vector2Int gridPosition)
-    {
-        if (gridPosition.x < 0 || gridPosition.x >= gridSize.x || gridPosition.y < 0 || gridPosition.y >= gridSize.y)
-            return null;
-        return nodeGrid[gridPosition.x, gridPosition.y];
-    }
-    private void OnDrawGizmos()
-    {
-        Vector3 nodeVector = new Vector3(gridSize.x, 1, gridSize.y);
-        Gizmos.DrawWireCube(transform.position, nodeVector);
+    //private void OnDrawGizmos()
+    //{
+    //    Vector3 nodeVector = new Vector3(gridSize.x, 1, gridSize.y);
+    //    Gizmos.DrawWireCube(transform.position, nodeVector);
 
-        if (nodeGrid != null)
-        {
-            Node playerNode = GetNodeFromWorldPosition(player.position);
-            foreach (Node node in nodeGrid)
-            {
-                if (node.GetWalkable())
-                    Gizmos.color = Color.green;
-                else
-                    Gizmos.color = Color.red;
-                if (node == playerNode)
-                    Gizmos.color = Color.blue;
-                Gizmos.DrawSphere(node.GetPosition(), nodeDistance / 2);
-            }
-        }
-    }
+    //    if (nodeGrid != null)
+    //    {
+    //        Node playerNode = GetNodeFromWorldPosition(player.position);
+    //        foreach (Node node in nodeGrid)
+    //        {
+    //            if (node.GetWalkable())
+    //                Gizmos.color = Color.green;
+    //            else
+    //                Gizmos.color = Color.red;
+    //            if (node == playerNode)
+    //                Gizmos.color = Color.blue;
+    //            Gizmos.DrawSphere(node.GetPosition(), nodeDistance / 2);
+    //        }
+    //    }
+    //}
 }

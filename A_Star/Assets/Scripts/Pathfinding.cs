@@ -1,44 +1,39 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
 
 internal class Pathfinding : MonoBehaviour
 {
     private NodeGrid nodeGrid;
     private List<Node> openList;
-    private List<Node> closedList;
+    private HashSet<Node> closedList;
     private List<Node> actualPath;
     private int movementCost = 10;
-
     private bool targetFound = false;
     private void Start()
     {
         openList = new List<Node>();
-        closedList = new List<Node>();
+        closedList = new HashSet<Node>();
         actualPath = new List<Node>();
         nodeGrid = FindObjectOfType<NodeGrid>();
     }
     internal List<Node> GetPath(Vector3 startPosition, Vector3 targetPostion)
     {
+        Stopwatch watch = new Stopwatch();
+        actualPath.Clear();
         Node startNode = nodeGrid.GetNodeFromWorldPosition(startPosition);
         Node targetNode = nodeGrid.GetNodeFromWorldPosition(targetPostion);
-        return GetPath(startNode, targetNode);
-    }
-    private List<Node> GetPath(Node startNode, Node targetNode)
-    {
-        actualPath.Clear();
-        Reset();
         if (IsNodeValid(startNode) && IsNodeValid(targetNode) && startNode != targetNode)
         {
+            watch.Start();
             openList.Add(startNode);
-            int hCost = GetHeuristic(startNode, targetNode);
-            startNode.SetHCost(hCost);
             FindPath(startNode, targetNode);
-            
+            print("Path found in: " + watch.ElapsedMilliseconds + " ms");
         }
+        ResetAllNodes();
         return actualPath;
     }
-
     private void FindPath(Node currentNode, Node targetNode)
     {
         if (openList.Contains(currentNode))
@@ -46,7 +41,15 @@ internal class Pathfinding : MonoBehaviour
             openList.Remove(currentNode);
             closedList.Add(currentNode);
         }
+        if (currentNode == targetNode)
+        {
+            targetFound = true;
+            CreateActualPath(currentNode);
+            return;
+        }
+
         ProcessAllNeighbours(currentNode, targetNode);
+
         if (targetFound == false)
         {
             Node lowestFValue = GetNodeWithLowestFValueFromOpenList();
@@ -57,68 +60,28 @@ internal class Pathfinding : MonoBehaviour
     private void ProcessAllNeighbours(Node currentNode, Node targetNode)
     {
         Node[] neighbours = nodeGrid.GetNeighbours(currentNode);
-        bool isDiagonal = false;
         for (int i = 0; i < neighbours.Length; i++)
         {
-            //0,1,2
-            //3,X,4
-            //5,6,7
-            if (i == 0 || i == 2 || i == 5 || i == 7)
-                isDiagonal = true;
-            else
-                isDiagonal = false;
-            if (neighbours[i] == null || currentNode == null || targetNode == null)
-            {
-                Debug.Log(neighbours[i] + " = null");
-                Debug.Log(currentNode + " = null");
-                Debug.Log(targetNode + " = null");
-            }
-            ProcessNeighbour(neighbours[i], currentNode, targetNode, isDiagonal);
-            if (targetFound)
-                return;
+            ProcessNeighbour(neighbours[i], currentNode, targetNode);
         }
     }
 
-    private void ProcessNeighbour(Node neighbour, Node currentNode, Node targetNode, bool isDiagonal)
+    private void ProcessNeighbour(Node neighbour, Node currentNode, Node targetNode)
     {
-        if (IsNodeValid(neighbour) && closedList.Contains(neighbour) == false && openList.Contains(neighbour) == false)
+        if (IsNodeValid(neighbour) && closedList.Contains(neighbour) == false)
         {
-            neighbour.SetPathParent(currentNode);
-            if (neighbour == targetNode)
+            int costToNeighbour = currentNode.gCost + GetHeuristic(currentNode, neighbour);
+            if (costToNeighbour < neighbour.gCost || openList.Contains(neighbour) == false)
             {
-                targetFound = true;
-                closedList.Add(neighbour);
-                CreateActualPath(neighbour);
-                return;
-            }
+                neighbour.SetGCost(costToNeighbour);
+                neighbour.SetHCost(GetHeuristic(neighbour, targetNode));
+                neighbour.SetPathParent(currentNode);
 
-            ProcessGValueAndHValues(neighbour, currentNode, targetNode, isDiagonal);
-            //fCost is gCost + hCost and is added in each node.
-            openList.Add(neighbour);
-        }
-        else if (openList.Contains(neighbour) /*|| closedList.Contains(neighbour)*/)
-        {
-            ProcessGValueAndHValues(neighbour, currentNode, targetNode, isDiagonal);
-            if(isDiagonal && currentNode.gCost + (int)(movementCost* 1.401f) < neighbour.gCost)
-            {
-                neighbour.SetPathParent(currentNode);
-            }
-            else if (isDiagonal == false && currentNode.gCost + movementCost < neighbour.gCost)
-            {
-                neighbour.SetPathParent(currentNode);
+                if (openList.Contains(neighbour) == false)
+                    openList.Add(neighbour);
             }
         }
     }
-
-    private void ProcessGValueAndHValues(Node neighbour, Node currentNode, Node targetNode, bool isDiagonal)
-    {
-        neighbour.SetHCost(GetHeuristic(neighbour, targetNode));
-        if (isDiagonal)
-            neighbour.SetGCost(currentNode.gCost + (int)(movementCost * 1.4)); // 8 directional, diagonal cost is with pythagoras ~1.4 
-        else
-            neighbour.SetGCost(currentNode.gCost + movementCost); // 4 directional
-    }
-
     private int GetHeuristic(Node node, Node targetNode)
     {
         int diagonalCost = (int)(movementCost * 1.401f); //diagonal distance with sides of 1 is with pythagoras ~1.4 *
@@ -134,12 +97,12 @@ internal class Pathfinding : MonoBehaviour
             return diagonalCost * deltaX + movementCost * (deltaY - deltaX);
 
     }
-    private void CreateActualPath(Node p_Parent)
+    private void CreateActualPath(Node node)
     {
-        if (p_Parent != null)
+        if (node != null)
         {
-            actualPath.Add(p_Parent);
-            CreateActualPath(p_Parent.pathParent);
+            actualPath.Add(node);
+            CreateActualPath(node.pathParent);
         }
     }
     private Node GetNodeWithLowestFValueFromOpenList()
@@ -147,9 +110,9 @@ internal class Pathfinding : MonoBehaviour
         Node lowest = null;
         if (openList.Count > 0)
             lowest = openList[0];
-        for (int i = 0; i < openList.Count; i++)
+        for (int i = 1; i < openList.Count; i++)
         {
-            if (openList[i].fCost < lowest.fCost)
+            if (openList[i].fCost < lowest.fCost || openList[i].fCost == lowest.fCost && openList[i].hCost < lowest.hCost)
                 lowest = openList[i];
         }
         return lowest;
@@ -159,7 +122,7 @@ internal class Pathfinding : MonoBehaviour
         return node != null && node.GetWalkable();
     }
 
-    private void Reset()
+    private void ResetAllNodes()
     {
         targetFound = false;
         ResetNodes();
@@ -172,9 +135,13 @@ internal class Pathfinding : MonoBehaviour
         {
             openList[i].ResetNode();
         }
-        for (int i = 0; i < closedList.Count; i++)
+        //for (int i = 0; i < closedList.Count; i++)
+        //{
+        //    closedList[i].ResetNode();
+        //}
+        foreach(Node node in closedList)
         {
-            closedList[i].ResetNode();
+            node.ResetNode();
         }
     }
     void OnDrawGizmos()
@@ -184,12 +151,17 @@ internal class Pathfinding : MonoBehaviour
             for (int i = 0; i < openList.Count; i++)
             {
                 Gizmos.color = Color.yellow;
-                Gizmos.DrawSphere(openList[i].GetPosition(),nodeGrid.nodeDistance/2);
+                Gizmos.DrawSphere(openList[i].GetPosition(), nodeGrid.nodeDistance / 2);
             }
-            for (int i = 0; i < closedList.Count; i++)
+            //for (int i = 0; i < closedList.Count; i++)
+            //{
+            //    Gizmos.color = Color.red;
+            //    Gizmos.DrawSphere(closedList[i].GetPosition(), nodeGrid.nodeDistance / 2);
+            //}
+            foreach(Node node in closedList)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawSphere(closedList[i].GetPosition(), nodeGrid.nodeDistance / 2);
+                Gizmos.DrawSphere(node.GetPosition(), nodeGrid.nodeDistance / 2);
             }
             for (int i = 0; i < actualPath.Count; i++)
             {

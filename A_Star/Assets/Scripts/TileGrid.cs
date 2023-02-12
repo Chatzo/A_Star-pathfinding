@@ -7,11 +7,11 @@ namespace AStar
     internal class TileGrid : MonoBehaviour
     {
         [SerializeField] private Tile tilePrefab;
-        public Tile [,] tileGrid { get; private set; }
-        public int width;
-        public int depth;
-        public Color colorOne;
-        public Color colorTwo;
+        internal Tile [,] tileGrid { get; private set; }
+        internal int width;
+        internal int depth;
+        internal Color colorOne;
+        internal Color colorTwo;
 
         private void Start()
         {

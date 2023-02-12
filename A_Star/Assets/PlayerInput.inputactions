@@ -11,7 +11,16 @@
                     "id": "fe3f6387-3ad6-4d9b-aab6-b2eb6df789d1",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "MultiTap(tapDelay=0.2),Tap",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RightClick",
+                    "type": "Button",
+                    "id": "3c2f2c35-673e-43a0-b88d-d08576820b81",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
                     "initialStateCheck": false
                 }
             ],
@@ -24,6 +33,17 @@
                     "processors": "",
                     "groups": "Keyboard & Mouse",
                     "action": "LeftClick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b090e0c2-5b00-4dd0-b516-ffdfe2ca98ce",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard & Mouse",
+                    "action": "RightClick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

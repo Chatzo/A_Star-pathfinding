@@ -4,27 +4,32 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Interactions;
 
-public class Controller : MonoBehaviour
+[RequireComponent(typeof(Pathfinding))]
+internal class Controller : MonoBehaviour
 {
     private PlayerInput playerControls;
-    private LayerMask tileMask;
     private Camera mainCamera;
-    private Ray myRay;
-    private RaycastHit myHit;
+    private Pathfinding pathfinding;
+    private int groundLayer;
 
     private void Awake()
     {
-        mainCamera = Camera.main;
-        tileMask = LayerMask.NameToLayer("Tiles");
 
+        pathfinding = GetComponent<Pathfinding>();
         playerControls = new PlayerInput();
-        playerControls.Mouse.LeftClick.performed += context =>
-        {
-            if (context.interaction is MultiTapInteraction)
-                DoubleLeftClick();
-            else
-                LeftClick();
-        };
+        playerControls.Mouse.LeftClick.performed += context => LeftClick();
+        playerControls.Mouse.RightClick.performed += context => RightClick();
+        //{
+        //    if (context.interaction is MultiTapInteraction)
+        //        RightClick();
+        //    else
+        //        LeftClick();
+        //};
+    }
+    private void Start()
+    {
+        mainCamera = Camera.main;
+        groundLayer = LayerMask.NameToLayer("Ground");
     }
     private void OnEnable()
     {
@@ -39,27 +44,24 @@ public class Controller : MonoBehaviour
     private void LeftClick()
     {
         Debug.Log("Leftclicked");
-        if(IsTileHit())
-        {
-            myHit.collider.gameObject.GetComponent<Tile>().SetColor(Color.magenta);
-        }
-        
+        Vector3 currentPosition = transform.position;
+        Vector3 targetPosition = GetClickPostion();
+        if (targetPosition != null)
+            pathfinding.GetPath(currentPosition, targetPosition);
     }
 
-    private void DoubleLeftClick()
+    private void RightClick()
     {
-        Debug.Log("Double clicked");
-        if(IsTileHit())
-        {
-            myHit.collider.gameObject.GetComponent<Tile>().SetColor(Color.blue);
-        }
+        Debug.Log("Rightclicked");
     }
-
-    private bool IsTileHit()
+    private Vector3 GetClickPostion()
     {
+        Ray myRay;
+        RaycastHit myHit;
         myRay = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(myRay, out myHit) && myHit.collider.gameObject.layer.CompareTo(tileMask) == 0)
-            return true;
-        return false;
+        if (Physics.Raycast(myRay, out myHit) && myHit.collider)
+            if (myHit.collider.gameObject.layer.CompareTo(groundLayer) == 0)
+                return myHit.point;
+        return Vector3.zero;
     }
 }
